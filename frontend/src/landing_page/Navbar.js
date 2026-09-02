@@ -1,7 +1,10 @@
 import React from "react";
-import {Link} from "react-router-dom"
+import { Link } from "react-router-dom";
+import { useAuth } from '../AuthProvider';
 
 function Navbar() {
+  const { logout, isLoggedIn } = useAuth();
+
   return (
     <nav
       className="navbar navbar-expand-lg border-bottom "
@@ -31,11 +34,28 @@ function Navbar() {
           id="navbarSupportedContent"
         >
           <ul className="navbar-nav mb-2 mb-lg-0">
-            <li className="nav-item">
-              <Link className="nav-link active" aria-current="page" to="/signup">
-                SignUp
-              </Link>
-            </li>
+            {isLoggedIn ? (
+              <>
+                <li className="nav-item">
+                  <button className="btn btn-link nav-link active p-0" onClick={logout}>
+                    Logout
+                  </button>
+                </li>
+              </>
+            ) : (
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link active" aria-current="page" to="/signup">
+                    SignUp
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link active" to="/login">
+                    Login
+                  </Link>
+                </li>
+              </>
+            )}
             <li className="nav-item">
               <Link className="nav-link active" to="/about">
                 About

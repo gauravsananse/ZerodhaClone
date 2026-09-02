@@ -8,6 +8,8 @@ const cors = require("cors");
 const {HoldingsModel} = require("./model/HoldingsModel")
 const {PositionsModel} = require("./model/PositionsModel")
 const {OrdersModel} =require("./model/OrdersModel")
+const { UserModel } = require("./model/UserModel");
+const crypto = require("crypto");
 
 
 const app = express() ; //trigger the app 
@@ -15,6 +17,86 @@ const app = express() ; //trigger the app
 
 app.use(cors());
 app.use(bodyParser.json());
+
+// A small in-memory token store is enough for this local learning project.
+// For a deployed app, replace this with signed JWTs or server-side sessions.
+const activeTokens = new Map();
+
+const publicUser = (user) => ({
+  id: user._id.toString(),
+  fullName: user.fullName,
+  email: user.email,
+});
+
+const createToken = (user) => {
+  const token = crypto.randomBytes(32).toString("hex");
+  activeTokens.set(token, publicUser(user));
+  return token;
+};
+
+app.post("/auth/signup", async (req, res) => {
+  try {
+    const fullName = req.body.fullName?.trim();
+    const email = req.body.email?.trim().toLowerCase();
+    const { password } = req.body;
+
+    if (!fullName || !email || !password) {
+      return res.status(400).json({ message: "Name, email, and password are required." });
+    }
+
+    const user = await UserModel.register(new UserModel({ fullName, email }), password);
+    const token = createToken(user);
+    return res.status(201).json({ user: publicUser(user), token });
+  } catch (error) {
+    if (error.name === "UserExistsError") {
+      return res.status(409).json({ message: "An account with this email already exists." });
+    }
+    return res.status(500).json({ message: "Unable to create the account. Please try again." });
+  }
+});
+
+app.post("/auth/login", async (req, res) => {
+  try {
+    const email = req.body.email?.trim().toLowerCase();
+    const { password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required." });
+    }
+
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: "Email or password is incorrect." });
+    }
+
+    const result = await user.authenticate(password);
+    if (!result.user) {
+      return res.status(401).json({ message: "Email or password is incorrect." });
+    }
+
+    const token = createToken(user);
+    return res.json({ user: publicUser(user), token });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to log in. Please try again." });
+  }
+});
+
+app.get("/auth/me", (req, res) => {
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  const user = activeTokens.get(token);
+
+  if (!user) {
+    return res.status(401).json({ message: "Your session has expired. Please log in again." });
+  }
+
+  return res.json({ user });
+});
+
+app.post("/auth/logout", (req, res) => {
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  if (token) activeTokens.delete(token);
+  return res.status(204).end();
+});
 //  app.get('/addHoldings', (req,res)=>{
 //      let tempHoldings = [
 //    {

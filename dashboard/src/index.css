@@ -324,6 +324,14 @@ hr {
   font-weight: 300;
 }
 
+.logout-button {
+  border: 0;
+  background: transparent;
+  color: #4184f3;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
 /* sudo selectors */
 
 .menu:hover {
@@ -850,5 +858,4 @@ hr {
 .action:hover {
   background-color: rgb(212, 212, 212);
 }
-
 

@@ -13,7 +13,7 @@ function Team() {
       >
         <div className="col-6 p-3 text-center">
           <img
-            src="media/images/back3.jpg"
+            src="media/images/My image.jpeg"
             style={{ borderRadius: "100%", width: "50%" }}
           />
           <h4 className="mt-5">Gaurav Sananse</h4>
